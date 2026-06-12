@@ -10,7 +10,7 @@
         "production": "mix --production",
         "build": "mix --production"
     },
-    "devDependencies": {
+    "dependencies": {
         "@fortawesome/fontawesome-free": "^6.5.0",
         "axios": "^1.6.0",
         "bootstrap": "^5.3.0",
@@ -20,6 +20,9 @@
         "sass": "^1.70.0",
         "sass-loader": "^14.0.0",
         "vue": "^2.7.16",
-        "vue-template-compiler": "^2.7.16"
+        "vue-template-compiler": "^2.7.16",
+        "webpack": "^5.89.0",
+        "webpack-cli": "^5.1.4",
+        "chokidar": "^3.5.3"
     }
 }
