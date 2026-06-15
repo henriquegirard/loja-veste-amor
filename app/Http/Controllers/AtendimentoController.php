@@ -68,10 +68,10 @@ class AtendimentoController extends Controller
                 
                 // Movimentacao
                 $movimentacao = new MovimentacaoEstoque();
-                $movimentacao->produto_estoque_id = $produto->id;
+                $movimentacao->produto_id = $produto->id;
                 $movimentacao->tipo = 'SAIDA';
                 $movimentacao->quantidade = $item['quantidade'];
-                $movimentacao->motivo = 'Doação (Atendimento Munícipe ID: ' . $municipe->id . ')';
+                $movimentacao->municipe_id = $municipe->id;
                 $movimentacao->realizado_por = $request->autorizado_por;
                 $movimentacao->data_transacao = now();
                 $movimentacao->save();
