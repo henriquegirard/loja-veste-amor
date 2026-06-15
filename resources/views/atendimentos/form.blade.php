@@ -22,14 +22,19 @@
         </div>
 
         <div class="row">
-            <div class="col-md-6 mb-3">
+            <div class="col-md-2 mb-3">
+                <label for="cep" class="form-label">CEP <span class="text-danger">*</span></label>
+                <input type="text" id="cep" name="cep" class="form-control" v-model="cep" :readonly="isEditMode" required placeholder="00000-000">
+            </div>
+
+            <div class="col-md-5 mb-3">
                 <label for="endereco" class="form-label">Endereço Completo</label>
-                <input type="text" id="endereco" name="endereco" class="form-control" v-model="endereco" :readonly="isEditMode">
+                <input type="text" id="endereco" name="endereco" class="form-control" v-model="endereco" readonly>
             </div>
             
             <div class="col-md-3 mb-3">
                 <label for="bairro" class="form-label">Bairro <span class="text-danger">*</span></label>
-                <input type="text" id="bairro" name="bairro" class="form-control" v-model="bairro" :readonly="isEditMode" required placeholder="Ex: Centro">
+                <input type="text" id="bairro" name="bairro" class="form-control" v-model="bairro" readonly placeholder="Ex: Centro">
             </div>
 
             <div class="col-md-3 mb-3 d-flex align-items-center mt-4">
@@ -49,30 +54,13 @@
         <div class="alert alert-info py-2 mb-4"><i class="fa-solid fa-circle-info"></i> O sistema limita automaticamente a saída à quantidade disponível em estoque.</div>
         
         <div class="row mt-3">
-            <div class="col-md-2 mb-3">
-                <label for="qtd_roupa_cama" class="form-label">Roupa de Cama</label>
-                <input type="number" id="qtd_roupa_cama" name="qtd_roupa_cama" class="form-control" v-model="qtd_roupa_cama" min="0" :max="estoque.roupa_cama" :disabled="estoque.roupa_cama === 0">
-                <small :class="['fw-bold', estoque.roupa_cama === 0 ? 'text-danger' : 'text-success']">Saldo: @{{ estoque.roupa_cama }}</small>
+            <div v-if="produtosEstoque.length === 0" class="col-12 text-center text-muted py-3">
+                <i class="fa-solid fa-spinner fa-spin"></i> Carregando estoque disponível...
             </div>
-            <div class="col-md-2 mb-3">
-                <label for="qtd_masculino" class="form-label">Masculino</label>
-                <input type="number" id="qtd_masculino" name="qtd_masculino" class="form-control" v-model="qtd_masculino" min="0" :max="estoque.masculino" :disabled="estoque.masculino === 0">
-                <small :class="['fw-bold', estoque.masculino === 0 ? 'text-danger' : 'text-success']">Saldo: @{{ estoque.masculino }}</small>
-            </div>
-            <div class="col-md-2 mb-3">
-                <label for="qtd_feminino" class="form-label">Feminino</label>
-                <input type="number" id="qtd_feminino" name="qtd_feminino" class="form-control" v-model="qtd_feminino" min="0" :max="estoque.feminino" :disabled="estoque.feminino === 0">
-                <small :class="['fw-bold', estoque.feminino === 0 ? 'text-danger' : 'text-success']">Saldo: @{{ estoque.feminino }}</small>
-            </div>
-            <div class="col-md-2 mb-3">
-                <label for="qtd_infantil" class="form-label">Infantil</label>
-                <input type="number" id="qtd_infantil" name="qtd_infantil" class="form-control" v-model="qtd_infantil" min="0" :max="estoque.infantil" :disabled="estoque.infantil === 0">
-                <small :class="['fw-bold', estoque.infantil === 0 ? 'text-danger' : 'text-success']">Saldo: @{{ estoque.infantil }}</small>
-            </div>
-            <div class="col-md-2 mb-3">
-                <label for="qtd_calcados" class="form-label">Calçados</label>
-                <input type="number" id="qtd_calcados" name="qtd_calcados" class="form-control" v-model="qtd_calcados" min="0" :max="estoque.calcados" :disabled="estoque.calcados === 0">
-                <small :class="['fw-bold', estoque.calcados === 0 ? 'text-danger' : 'text-success']">Saldo: @{{ estoque.calcados }}</small>
+            <div v-for="produto in produtosEstoque" :key="produto.id" class="col-md-2 mb-3">
+                <label :for="'qtd_' + produto.id" class="form-label text-truncate d-block" :title="produto.categoria">@{{ produto.categoria }}</label>
+                <input type="number" :id="'qtd_' + produto.id" class="form-control" v-model.number="produto.qtd_saida" min="0" :max="produto.quantidade_atual" :disabled="produto.quantidade_atual === 0">
+                <small :class="['fw-bold', produto.quantidade_atual === 0 ? 'text-danger' : 'text-success']">Saldo: @{{ produto.quantidade_atual }}</small>
             </div>
         </div>
 
@@ -89,8 +77,8 @@
         <h4 class="text-secondary border-bottom pb-2">Finalização</h4>
         <div class="row mt-3">
             <div class="col-md-6 mb-3">
-                <label for="autorizado_por" class="form-label">Autorizado Por</label>
-                <input type="text" id="autorizado_por" name="autorizado_por" class="form-control" v-model="autorizado_por">
+                <label for="autorizado_por" class="form-label">Autorizado Por (Atendente Atual)</label>
+                <input type="text" id="autorizado_por" name="autorizado_por" class="form-control" v-model="autorizado_por" readonly>
             </div>
             
             <div class="col-md-6 mb-3 d-flex align-items-center mt-4">

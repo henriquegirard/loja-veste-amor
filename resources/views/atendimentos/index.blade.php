@@ -5,7 +5,7 @@ use App\Domain\Types\StatusType;
 @extends('layout.templates.forms.create-panel', ['returnTo' => route('atendimentos.index')])
 
 @section('form-open')
-    {!! Html::form()->method('POST')->action(route('atendimentos.store'))->id('form_atendimento')->open() !!}
+    <form @submit.prevent="salvarAtendimento" id="form_atendimento">
 @stop
 
 @section('panel-description')
@@ -37,7 +37,7 @@ use App\Domain\Types\StatusType;
 @stop
 
 @section('form-close')
-    {!! Html::form()->close() !!}
+    </form>
 @stop
 
 @push('final-scripts')
@@ -51,28 +51,18 @@ use App\Domain\Types\StatusType;
                 nome: '',
                 data_nascimento: '',
                 telefone: '',
+                cep: '',
                 endereco: '',
                 bairro: '',
                 possui_filhos: false,
                 idades_filhos: [],
                 
-                // Limites Baseados no Estoque Real (mocked initially)
-                estoque: {
-                    roupa_cama: 15,
-                    masculino: 0, // Exemplo de item zerado para testar disable
-                    feminino: 40,
-                    infantil: 25,
-                    calcados: 10
-                },
+                // Estoque carregado da API
+                produtosEstoque: [],
 
-                // Doacoes
-                qtd_roupa_cama: 0,
-                qtd_masculino: 0,
-                qtd_feminino: 0,
-                qtd_infantil: 0,
-                qtd_calcados: 0,
+                // Doacoes e Finalizacao
                 outros_materiais: '',
-                autorizado_por: '',
+                autorizado_por: '{{ Auth::check() ? Auth::user()->name : "Administrador" }}',
                 assinatura_recebedor: false,
 
                 // Validacoes
@@ -80,7 +70,8 @@ use App\Domain\Types\StatusType;
                 diasDesdeUltimaVisita: null,
                 intervaloMinimo: 30, // dias
                 isEditMode: false,
-                loading: false
+                loading: false,
+                saving: false
             }
         },
         computed: {
@@ -96,40 +87,82 @@ use App\Domain\Types\StatusType;
                 return `Última visita registrada há ${this.diasDesdeUltimaVisita} dias (em ${this.ultimaVisita}). Está dentro do período permitido.`;
             }
         },
+        mounted() {
+            this.carregarEstoque();
+        },
         methods: {
+            carregarEstoque() {
+                axios.get('/api/estoque')
+                    .then(response => {
+                        this.produtosEstoque = response.data.map(p => ({
+                            ...p,
+                            qtd_saida: 0
+                        }));
+                    })
+                    .catch(error => {
+                        console.error("Erro ao buscar estoque:", error);
+                    });
+            },
             buscarMunicipe() {
                 let cleanCpf = this.cpf.replace(/\D/g, '');
                 if (cleanCpf.length === 11) {
                     this.loading = true;
-                    // Mock da chamada AJAX (deve ser ajustado para ziggy/laroute no projeto real)
-                    // $.get(route('api.municipes.findByCpf', {cpf: cleanCpf}))
                     
-                    // Exemplo simulado de retorno da API:
-                    /*
-                    $.get(`/api/municipes/${cleanCpf}`)
-                        .done(data => {
-                            if (data) {
+                    axios.get(`/api/municipes/${cleanCpf}`)
+                        .then(response => {
+                            if (response.data) {
+                                let data = response.data;
                                 this.municipeId = data.id;
                                 this.nome = data.nome;
                                 this.data_nascimento = data.data_nascimento;
                                 this.telefone = data.telefone;
+                                // Assume que se tem endereço/bairro e não tem CEP salvo, o CEP fica vazio mas o endereço preenche.
+                                // Idealmente CEP seria salvo no BD também, mas preenchemos os outros.
                                 this.endereco = data.endereco;
                                 this.bairro = data.bairro;
                                 this.possui_filhos = data.possui_filhos;
-                                this.isEditMode = true; // Impede a edicao dos dados pessoais
+                                this.isEditMode = true; 
                                 
                                 if (data.ultima_visita) {
                                     this.ultimaVisita = data.ultima_visita.data_formatada;
                                     this.diasDesdeUltimaVisita = data.ultima_visita.dias;
+                                } else {
+                                    this.ultimaVisita = null;
+                                    this.diasDesdeUltimaVisita = null;
                                 }
+                            } else {
+                                this.resetForm();
                             }
                         })
-                        .always(() => {
+                        .catch(error => {
+                            if(error.response && error.response.status === 404) {
+                                this.resetForm(); // Nao encontrou, cadastra novo
+                            } else {
+                                console.error('Erro ao buscar munícipe', error);
+                            }
+                        })
+                        .finally(() => {
                             this.loading = false;
                         });
-                    */
                 } else {
                     this.resetForm();
+                }
+            },
+            buscarCep() {
+                let cleanCep = this.cep.replace(/\D/g, '');
+                if (cleanCep.length === 8) {
+                    axios.get(`https://viacep.com.br/ws/${cleanCep}/json/`)
+                        .then(response => {
+                            if (!response.data.erro) {
+                                this.endereco = response.data.logradouro + (response.data.complemento ? ' - ' + response.data.complemento : '');
+                                this.bairro = response.data.bairro;
+                            } else {
+                                alert("CEP não encontrado.");
+                            }
+                        })
+                        .catch(error => {
+                            console.error("Erro ao buscar CEP:", error);
+                        });
                 }
             },
             resetForm() {
@@ -137,6 +170,7 @@ use App\Domain\Types\StatusType;
                 this.nome = '';
                 this.data_nascimento = '';
                 this.telefone = '';
+                this.cep = '';
                 this.endereco = '';
                 this.bairro = '';
                 this.possui_filhos = false;
@@ -144,6 +178,52 @@ use App\Domain\Types\StatusType;
                 this.ultimaVisita = null;
                 this.diasDesdeUltimaVisita = null;
                 this.isEditMode = false;
+            },
+            salvarAtendimento(event) {
+                if (!this.isIntervaloValido) {
+                    alert("Atenção: O munícipe ainda não atingiu o intervalo mínimo para retirar novas doações.");
+                    return;
+                }
+
+                // Prepara os itens que sofrerão saída
+                let itensSaida = this.produtosEstoque.filter(p => p.qtd_saida > 0).map(p => ({
+                    produto_estoque_id: p.id,
+                    quantidade: p.qtd_saida
+                }));
+
+                if (itensSaida.length === 0 && this.outros_materiais.trim() === '') {
+                    alert("Por favor, informe a quantidade de pelo menos um item doado ou descreva 'Outros Materiais'.");
+                    return;
+                }
+
+                this.saving = true;
+
+                let payload = {
+                    cpf: this.cpf.replace(/\D/g, ''),
+                    nome: this.nome,
+                    data_nascimento: this.data_nascimento,
+                    telefone: this.telefone,
+                    endereco: this.endereco,
+                    bairro: this.bairro,
+                    possui_filhos: this.possui_filhos,
+                    itens: itensSaida,
+                    outros_materiais: this.outros_materiais,
+                    autorizado_por: this.autorizado_por,
+                    assinatura_recebedor: this.assinatura_recebedor
+                };
+
+                axios.post('/api/atendimentos', payload)
+                    .then(response => {
+                        alert("Atendimento registrado com sucesso!");
+                        window.location.reload(); // Recarrega a página para limpar e atualizar o estoque
+                    })
+                    .catch(error => {
+                        console.error("Erro ao salvar atendimento:", error);
+                        alert(error.response?.data?.message || "Ocorreu um erro ao registrar o atendimento. Verifique os dados e tente novamente.");
+                    })
+                    .finally(() => {
+                        this.saving = false;
+                    });
             }
         },
         watch: {
@@ -153,6 +233,12 @@ use App\Domain\Types\StatusType;
                     this.buscarMunicipe();
                 } else if (cleanCpf.length < 11 && this.isEditMode) {
                     this.resetForm();
+                }
+            },
+            cep() {
+                let cleanCep = this.cep.replace(/\D/g, '');
+                if (cleanCep.length === 8 && !this.isEditMode) {
+                    this.buscarCep();
                 }
             }
         }
