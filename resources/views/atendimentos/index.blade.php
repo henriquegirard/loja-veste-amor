@@ -244,8 +244,24 @@ use App\Domain\Types\StatusType;
             }
         },
         watch: {
-            cpf() {
-                let cleanCpf = this.cpf.replace(/\D/g, '');
+            cpf(newVal) {
+                let value = newVal.replace(/\D/g, '');
+                if (value.length > 11) value = value.slice(0, 11);
+                
+                let masked = value;
+                if (value.length > 9) {
+                    masked = value.replace(/(\d{3})(\d{3})(\d{3})(\d{1,2})/, "$1.$2.$3-$4");
+                } else if (value.length > 6) {
+                    masked = value.replace(/(\d{3})(\d{3})(\d{1,3})/, "$1.$2.$3");
+                } else if (value.length > 3) {
+                    masked = value.replace(/(\d{3})(\d{1,3})/, "$1.$2");
+                }
+                
+                if (this.cpf !== masked) {
+                    this.cpf = masked;
+                }
+
+                let cleanCpf = value;
                 if (cleanCpf.length === 11) {
                     this.buscarMunicipe();
                 } else if (cleanCpf.length < 11 && this.isEditMode) {
