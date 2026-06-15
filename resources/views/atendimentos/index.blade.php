@@ -5,7 +5,7 @@ use App\Domain\Types\StatusType;
 @extends('layout.templates.forms.create-panel', ['returnTo' => route('atendimentos.index')])
 
 @section('form-open')
-    <form @submit.prevent="salvarAtendimento" id="form_atendimento">
+    <!-- form handled by Vue internally -->
 @stop
 
 @section('panel-description')
@@ -14,30 +14,31 @@ use App\Domain\Types\StatusType;
 
 @section('panel-content')
     <div id="app_atendimento" v-cloak>
-        <!-- Busca de CPF -->
-        <div class="row mb-4">
-            <div class="col-md-6 offset-md-3">
-                <div class="input-group input-group-lg">
-                    <span class="input-group-text"><i class="fa-solid fa-magnifying-glass"></i></span>
-                    <input type="text" class="form-control" v-model="cpf" placeholder="Digite o CPF para buscar ou cadastrar..." maxlength="14" autofocus>
-                </div>
-                <div v-if="mensagemIntervalo" :class="['alert mt-2', isIntervaloValido ? 'alert-warning' : 'alert-danger']" role="alert">
-                    <i class="fa-solid fa-circle-exclamation"></i> @{{ mensagemIntervalo }}
+        <form @submit.prevent="salvarAtendimento" id="form_atendimento">
+            <!-- Busca de CPF -->
+            <div class="row mb-4">
+                <div class="col-md-6 offset-md-3">
+                    <div class="input-group input-group-lg">
+                        <span class="input-group-text"><i class="fa-solid fa-magnifying-glass"></i></span>
+                        <input type="text" class="form-control" v-model="cpf" placeholder="Digite o CPF para buscar ou cadastrar..." maxlength="14" autofocus>
+                    </div>
+                    <div v-if="mensagemIntervalo" :class="['alert mt-2', isIntervaloValido ? 'alert-warning' : 'alert-danger']" role="alert">
+                        <i class="fa-solid fa-circle-exclamation"></i> @{{ mensagemIntervalo }}
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <hr>
+            <hr>
 
-        <!-- Formulário (Exibido apenas se um CPF válido for digitado ou se estiver cadastrando um novo) -->
-        <div v-show="cpf.length >= 11">
-            @include('atendimentos.form')
-        </div>
+            <!-- Formulário (Exibido apenas se um CPF válido for digitado ou se estiver cadastrando um novo) -->
+            <div v-show="cpf.length >= 11">
+                @include('atendimentos.form')
+            </div>
+        </form>
     </div>
 @stop
 
 @section('form-close')
-    </form>
 @stop
 
 @push('final-scripts')
