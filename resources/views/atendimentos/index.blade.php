@@ -185,6 +185,11 @@ use App\Domain\Types\StatusType;
                     return;
                 }
 
+                if (!this.nome || !this.data_nascimento || !this.cep || !this.bairro) {
+                    alert("Por favor, preencha todos os campos obrigatórios do Munícipe (marcados com *).");
+                    return;
+                }
+
                 // Prepara os itens que sofrerão saída
                 let itensSaida = this.produtosEstoque.filter(p => p.qtd_saida > 0).map(p => ({
                     produto_estoque_id: p.id,

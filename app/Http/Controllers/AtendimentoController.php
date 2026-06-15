@@ -21,6 +21,7 @@ class AtendimentoController extends Controller
         $request->validate([
             'cpf' => 'required|string',
             'nome' => 'required|string',
+            'data_nascimento' => 'required|date',
             'bairro' => 'required|string',
             'itens' => 'array',
         ]);
