@@ -158,7 +158,7 @@ use App\Domain\Types\StatusType;
                                 this.endereco = response.data.logradouro + (response.data.complemento ? ' - ' + response.data.complemento : '');
                                 this.bairro = response.data.bairro;
                             } else {
-                                alert("CEP não encontrado.");
+                                Swal.fire('Oops...', 'CEP não encontrado.', 'error');
                             }
                         })
                         .catch(error => {
@@ -182,12 +182,12 @@ use App\Domain\Types\StatusType;
             },
             salvarAtendimento(event) {
                 if (!this.isIntervaloValido) {
-                    alert("Atenção: O munícipe ainda não atingiu o intervalo mínimo para retirar novas doações.");
+                    Swal.fire('Atenção', 'O munícipe ainda não atingiu o intervalo mínimo para retirar novas doações.', 'warning');
                     return;
                 }
 
                 if (!this.nome || !this.data_nascimento || !this.cep || !this.bairro) {
-                    alert("Por favor, preencha todos os campos obrigatórios do Munícipe (marcados com *).");
+                    Swal.fire('Atenção', 'Por favor, preencha todos os campos obrigatórios do Munícipe (marcados com *).', 'warning');
                     return;
                 }
 
@@ -198,7 +198,7 @@ use App\Domain\Types\StatusType;
                 }));
 
                 if (itensSaida.length === 0 && this.outros_materiais.trim() === '') {
-                    alert("Por favor, informe a quantidade de pelo menos um item doado ou descreva 'Outros Materiais'.");
+                    Swal.fire('Atenção', "Por favor, informe a quantidade de pelo menos um item doado ou descreva 'Outros Materiais'.", 'warning');
                     return;
                 }
 
@@ -220,12 +220,23 @@ use App\Domain\Types\StatusType;
 
                 axios.post('/api/atendimentos', payload)
                     .then(response => {
-                        alert("Atendimento registrado com sucesso!");
-                        window.location.reload(); // Recarrega a página para limpar e atualizar o estoque
+                        Swal.fire({
+                            title: 'Sucesso!',
+                            text: 'Atendimento registrado com sucesso!',
+                            icon: 'success',
+                            confirmButtonColor: '#0d6efd'
+                        }).then(() => {
+                            window.location.reload(); // Recarrega a página para limpar e atualizar o estoque
+                        });
                     })
                     .catch(error => {
                         console.error("Erro ao salvar atendimento:", error);
-                        alert(error.response?.data?.message || "Ocorreu um erro ao registrar o atendimento. Verifique os dados e tente novamente.");
+                        Swal.fire({
+                            title: 'Erro!',
+                            text: error.response?.data?.message || "Ocorreu um erro ao registrar o atendimento. Verifique os dados e tente novamente.",
+                            icon: 'error',
+                            confirmButtonColor: '#dc3545'
+                        });
                     })
                     .finally(() => {
                         this.saving = false;
