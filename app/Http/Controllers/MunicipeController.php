@@ -10,21 +10,23 @@ class MunicipeController extends Controller
 {
     public function findByCpf($cpf)
     {
-        $municipe = Municipe::with(['visitas' => function($query) {
-            $query->orderBy('created_at', 'desc')->first();
-        }])->where('cpf', $cpf)->first();
+        $municipe = Municipe::where('cpf', $cpf)->first();
 
         if (!$municipe) {
             return response()->json(['message' => 'Munícipe não encontrado'], 404);
         }
 
         $data = $municipe->toArray();
-        $ultimaVisita = $municipe->visitas->first();
+        if ($municipe->data_nascimento) {
+            $data['data_nascimento'] = \Carbon\Carbon::parse($municipe->data_nascimento)->format('Y-m-d');
+        }
+
+        $ultimaVisita = $municipe->visitas()->orderBy('data_visita', 'desc')->first();
 
         if ($ultimaVisita) {
             $data['ultima_visita'] = [
-                'data_formatada' => $ultimaVisita->created_at->format('d/m/Y H:i'),
-                'dias' => $ultimaVisita->created_at->diffInDays(Carbon::now())
+                'data_formatada' => \Carbon\Carbon::parse($ultimaVisita->data_visita)->format('d/m/Y H:i'),
+                'dias' => \Carbon\Carbon::parse($ultimaVisita->data_visita)->diffInDays(\Carbon\Carbon::now())
             ];
         }
 
