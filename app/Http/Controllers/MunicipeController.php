@@ -26,7 +26,7 @@ class MunicipeController extends Controller
         if ($ultimaVisita) {
             $data['ultima_visita'] = [
                 'data_formatada' => \Carbon\Carbon::parse($ultimaVisita->data_visita)->format('d/m/Y H:i'),
-                'dias' => \Carbon\Carbon::parse($ultimaVisita->data_visita)->diffInDays(\Carbon\Carbon::now())
+                'dias' => (int) \Carbon\Carbon::parse($ultimaVisita->data_visita)->diffInDays(\Carbon\Carbon::now())
             ];
         }
 
