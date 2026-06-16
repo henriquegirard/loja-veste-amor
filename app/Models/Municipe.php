@@ -40,4 +40,9 @@ class Municipe extends Model
     {
         return $this->hasMany(MovimentacaoEstoque::class);
     }
+
+    public function visitas()
+    {
+        return $this->hasMany(VisitaDoacao::class, 'municipe_id');
+    }
 }

@@ -1,14 +1,8 @@
 // Fonts
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+@import url('https://fonts.bunny.net/css?family=Nunito');
 
 // Variables
-$font-family-sans-serif: 'Inter', sans-serif;
-$primary: #0056b3; 
+@import 'variables';
 
 // Bootstrap
-@import '~bootstrap/scss/bootstrap';
-
-// Custom utilities
-[v-cloak] {
-    display: none !important;
-}
+@import 'bootstrap/scss/bootstrap';
